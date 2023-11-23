@@ -1,0 +1,43 @@
+version: '3'
+services:
+  llm:
+    image: ghcr.io/huggingface/text-generation-inference:1.1.0
+    ports:
+      - "8080:8080"
+    environment:
+      - MODEL_ID=TheBloke/openchat_3.5-AWQ
+      - PORT=8080
+      - QUANTIZE=awq
+      - MAX_INPUT_LEN=3696
+      - MAX_TOTAL_TOKENS=4096
+      - MAX_BATCH_PREFILL_TOKENS=4096
+      - CUDA_MEMORY_FRACTION=0.6
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  tts:
+    image: ghcr.io/coqui-ai/xtts-streaming-server
+    ports:
+      - "8000:80"
+    environment:
+      - COQUI_TOS_AGREED=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "5000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - llm
+      - tts
