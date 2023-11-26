@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
@@ -7,8 +7,30 @@ function App() {
   const [speaker, setSpeaker] = useState('');
   const [file, setFile] = useState(null);
   let isTTSPending = false;
-
   let fullprompt = "GPT4 Correct User: You are a large language model known as OpenChat, the open-source counterpart to ChatGPT, equally powerful as its closed-source sibling. You communicate using an advanced deep learning based speech synthesis system, so feel free to include interjections such as 'hmm' or 'oh', but avoid using emojis, symboles, code snippets, or anything else that does not translate well to spoken language. Fox exemple, instead of using % say percent, = say equal and for * say times etc...<|end_of_turn|>GPT4 Correct Assistant: Hmm ok works for me!<|end_of_turn|>"
+
+  useEffect(() => {
+    // Function to fetch and process the default speaker file
+    const fetchDefaultSpeakerEmbedding = async () => {
+      try {
+        const response = await fetch('/female.wav');
+        const blob = await response.blob();
+        const formData = new FormData();
+        formData.append('wav_file', blob, 'female.wav');
+
+        const speakerResponse = await fetch(serverUrl + '/clone_speaker', {
+          method: 'POST',
+          body: formData,
+        });
+        const speakerData = await speakerResponse.json();
+        setSpeaker(speakerData);
+      } catch (error) {
+        console.error('Error fetching default speaker embedding:', error);
+      }
+    };
+
+    fetchDefaultSpeakerEmbedding();
+  }, []);
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
