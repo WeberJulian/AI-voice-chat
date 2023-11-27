@@ -5,6 +5,7 @@ function App() {
   const serverUrl = 'http://localhost:3000';
   const [file, setFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [waveformColor, setWaveformColor] = useState('grey');
   const mediaRecorderRef = useRef(null);
   const speakerRef = useRef(null);
   const conversationRef = useRef([
@@ -13,6 +14,9 @@ function App() {
   ]);
   let audioChunks = [];
   let isTTSPending = false;
+
+  const defaultCircleDiameter = 200;
+  const [circleDiameter, setCircleDiameter] = useState(defaultCircleDiameter);
 
   const conv2prompt = (conv) => {
     let prompt = "";
@@ -75,6 +79,7 @@ function App() {
   }, [isRecording]);
 
   const startRecording = () => {
+    setWaveformColor('red');
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         mediaRecorderRef.current = new MediaRecorder(stream);
@@ -98,6 +103,7 @@ function App() {
   const stopRecording = () => {
     console.log('Stopping recording', mediaRecorderRef.current);
     mediaRecorderRef.current.stop();
+    setWaveformColor('grey');
   };
 
   const sendAudioToASR = (audioBlob) => {
@@ -141,9 +147,11 @@ function App() {
 
   const handleTTS = async (text) => {
     isTTSPending = true;
+  
     function linearInterpolate(sample1, sample2, fraction) {
       return sample1 * (1 - fraction) + sample2 * fraction;
     }
+  
     await fetch(serverUrl + '/tts_stream', {
       method: 'POST',
       headers: {
@@ -169,6 +177,8 @@ function App() {
       let audioQueue = [];
       let isStreamingFinished = false;
       let nextSample = 0;
+      let amplitudeSum = 0; // Accumulator for amplitude values
+      let sampleCount = 0; // Counter for number of samples processed
   
       scriptNode.onaudioprocess = (audioProcessingEvent) => {
         const outputBuffer = audioProcessingEvent.outputBuffer.getChannelData(0);
@@ -184,6 +194,19 @@ function App() {
             );
             outputBuffer[i] = interpolatedSample / 32768;
             nextSample += 0.54421769;
+  
+            // Calculate amplitude and update accumulator
+            amplitudeSum += Math.abs(outputBuffer[i]);
+            sampleCount++;
+  
+            // Every 100 samples, calculate and log the average, then reset
+            if (sampleCount === 1000) {
+              const averageAmplitude = amplitudeSum / sampleCount;
+              console.log('Running Average Amplitude:', averageAmplitude);
+              amplitudeSum = 0;
+              sampleCount = 0;
+              setCircleDiameter(defaultCircleDiameter + averageAmplitude * defaultCircleDiameter * 3);
+            }
           } else {
             outputBuffer[i] = 0; // Fill with silence if no data available
             if (isStreamingFinished) {
@@ -214,7 +237,7 @@ function App() {
     .catch(error => {
       console.error('Error calling TTS service:', error);
     });
-  };
+  };  
 
   const generateBotResponse = async (text) => {
     let generated_text = "";
@@ -287,29 +310,23 @@ function App() {
 
   const sendMessage = async (message) => {
     if (!message) return;
+    setWaveformColor('green');
     conversationRef.current.push({ sender: 'user', message });
     const prompt = conv2prompt(conversationRef.current);
     let generated_text = await generateBotResponse(prompt);
     conversationRef.current.push({ sender: 'bot', message: generated_text });
+    setWaveformColor('grey');
   };
 
   return (
     <div className="App">
       <div>
-        <h1>Chat with OpenChat 3.5</h1>
-        <div className="chat-window">
-          {conversationRef.current.map((msg, index) => (
-            <div key={index} className={`message ${msg.sender}`}>
-              {msg.message}
-            </div>
-          ))}
-        </div>
-        <input type="text" onKeyDown={(e) => e.key === 'Enter' && sendMessage(e.target.value)} />
-        <button onClick={() => sendMessage(document.querySelector('input').value)}>Send</button>
-
-        <div>
+        {/* <div className="settings-tab">
           <input type="file" onChange={handleFileChange} />
           <button onClick={handleUpload}>Upload and Process</button>
+        </div> */}
+        <div className="waveform-container">
+          <div className="circle" style={{ width: circleDiameter, height: circleDiameter, backgroundColor: waveformColor }}></div>
         </div>
       </div>
     </div>

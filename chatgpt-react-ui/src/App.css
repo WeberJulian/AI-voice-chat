@@ -55,3 +55,24 @@
 .message.bot {
   text-align: right;
 }
+
+.circle {
+  border-radius: 50%;
+  transition: width 0.1s ease, height 0.1s ease;
+}
+
+.settings-tab {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 20px;
+  /* Other styling... */
+}
+
+.waveform-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /* Other styling... */
+}
