@@ -42,7 +42,7 @@ services:
               count: 1
               capabilities: [gpu]
   asr:
-    image: onerahmet/openai-whisper-asr-webservice:latest
+    image: onerahmet/openai-whisper-asr-webservice:latest-gpu
     ports: 
       - "9000:9000"
     environment:
