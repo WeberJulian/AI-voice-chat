@@ -1,13 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import './App.css';
 
 function App() {
   const serverUrl = 'http://localhost:3000';
-  const [conversation, setConversation] = useState([]);
-  const [speaker, setSpeaker] = useState('');
   const [file, setFile] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const speakerRef = useRef(null);
+  const conversationRef = useRef([
+    {sender: 'user', message: "You are a large language model known as OpenChat, the open-source counterpart to ChatGPT, equally powerful as its closed-source sibling. You communicate using an advanced deep learning based speech synthesis system, so feel free to include interjections (such as 'hmm', 'oh', 'right', 'wow'...), but avoid using emojis, symboles, code snippets, or anything else that does not translate well to spoken language. Fox exemple, instead of using % say percent, = say equal and for * say times etc... Also please avoid using lists with numbers as itmes like so 1. 2. Use regular sentences instead."},
+    {sender: 'bot', message: "Hmm ok works for me!"},
+  ]);
+  let audioChunks = [];
   let isTTSPending = false;
-  let fullprompt = "GPT4 Correct User: You are a large language model known as OpenChat, the open-source counterpart to ChatGPT, equally powerful as its closed-source sibling. You communicate using an advanced deep learning based speech synthesis system, so feel free to include interjections such as 'hmm' or 'oh', but avoid using emojis, symboles, code snippets, or anything else that does not translate well to spoken language. Fox exemple, instead of using % say percent, = say equal and for * say times etc...<|end_of_turn|>GPT4 Correct Assistant: Hmm ok works for me!<|end_of_turn|>"
+
+  const conv2prompt = (conv) => {
+    let prompt = "";
+    for (let i = 0; i < conv.length; i++) {
+      if (conv[i].sender === "user") {
+        prompt += "GPT4 Correct User: " + conv[i].message + "<|end_of_turn|>GPT4 Correct Assistant:";
+      } else {
+        prompt += conv[i].message + "<|end_of_turn|>";
+      }
+    }
+    return prompt;
+  }
 
   useEffect(() => {
     // Function to fetch and process the default speaker file
@@ -23,7 +40,7 @@ function App() {
           body: formData,
         });
         const speakerData = await speakerResponse.json();
-        setSpeaker(speakerData);
+        speakerRef.current = speakerData;
       } catch (error) {
         console.error('Error fetching default speaker embedding:', error);
       }
@@ -31,6 +48,75 @@ function App() {
 
     fetchDefaultSpeakerEmbedding();
   }, []);
+
+  useEffect(() => {
+    // Setup event listeners for push-to-talk
+    const handleKeyDown = (event) => {
+      if (event.key === 'Alt' && !isRecording) {
+        setIsRecording(true);
+        startRecording();
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      if (event.key === 'Alt' && isRecording) {
+        setIsRecording(false);
+        stopRecording();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isRecording]);
+
+  const startRecording = () => {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        mediaRecorderRef.current = new MediaRecorder(stream);
+        mediaRecorderRef.current.start();
+        console.log('Starting to record:', mediaRecorderRef.current);
+
+        mediaRecorderRef.current.ondataavailable =  (event) => {
+          audioChunks.push(event.data);
+          console.log('Audio chunk recorded:', event.data);
+        };
+
+        mediaRecorderRef.current.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          sendAudioToASR(audioBlob);
+          audioChunks = [];
+        };
+      })
+      .catch(err => console.error('Error accessing microphone:', err));
+  };
+
+  const stopRecording = () => {
+    console.log('Stopping recording', mediaRecorderRef.current);
+    mediaRecorderRef.current.stop();
+  };
+
+  const sendAudioToASR = (audioBlob) => {
+    const formData = new FormData();
+    console.log('Sending audio to ASR:', audioBlob);
+    formData.append('audio_file', audioBlob);
+
+    fetch(serverUrl + '/asr', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.text())
+    .then(transcribedText => {
+      console.log('Transcribed text:', transcribedText);
+      // Add your logic to handle the transcribed text
+      sendMessage(transcribedText);
+    })
+    .catch(error => console.error('Error sending audio to ASR:', error));
+  };
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -46,7 +132,7 @@ function App() {
     })
     .then(response => response.json())
     .then(data => {
-      setSpeaker(data);
+      speakerRef.current = data;
     })
     .catch(error => {
       console.error('Error:', error);
@@ -57,7 +143,7 @@ function App() {
     isTTSPending = true;
     function linearInterpolate(sample1, sample2, fraction) {
       return sample1 * (1 - fraction) + sample2 * fraction;
-    }  
+    }
     await fetch(serverUrl + '/tts_stream', {
       method: 'POST',
       headers: {
@@ -66,8 +152,8 @@ function App() {
       body: JSON.stringify({
         text: text,
         language: 'en',
-        gpt_cond_latent: speaker.gpt_cond_latent,
-        speaker_embedding: speaker.speaker_embedding,
+        gpt_cond_latent: speakerRef.current.gpt_cond_latent,
+        speaker_embedding: speakerRef.current.speaker_embedding,
         add_wav_header: false,
       })
     })
@@ -201,11 +287,10 @@ function App() {
 
   const sendMessage = async (message) => {
     if (!message) return;
-    setConversation([...conversation, { sender: 'user', message }]);
-    fullprompt += "GPT4 Correct User: " + message + "<|end_of_turn|>GPT4 Correct Assistant:";
-    let generated_text = await generateBotResponse(fullprompt);
-    fullprompt += generated_text;
-    setConversation([...conversation, { sender: 'user', message }, { sender: 'bot', message: generated_text }]);
+    conversationRef.current.push({ sender: 'user', message });
+    const prompt = conv2prompt(conversationRef.current);
+    let generated_text = await generateBotResponse(prompt);
+    conversationRef.current.push({ sender: 'bot', message: generated_text });
   };
 
   return (
@@ -213,7 +298,7 @@ function App() {
       <div>
         <h1>Chat with OpenChat 3.5</h1>
         <div className="chat-window">
-          {conversation.map((msg, index) => (
+          {conversationRef.current.map((msg, index) => (
             <div key={index} className={`message ${msg.sender}`}>
               {msg.message}
             </div>
