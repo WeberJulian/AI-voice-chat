@@ -9,6 +9,7 @@ services:
     depends_on:
       - llm
       - tts
+      - asr
   llm:
     image: ghcr.io/huggingface/text-generation-inference:1.1.0
     ports:
