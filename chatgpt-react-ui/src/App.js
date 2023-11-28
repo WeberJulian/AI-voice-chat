@@ -152,15 +152,14 @@ function App() {
     console.log('Sending audio to ASR:', audioBlob);
     formData.append('audio_file', audioBlob);
 
-    fetch(serverUrl + '/asr', {
+    fetch(serverUrl + '/asr?encode=true&task=transcribe&vad_filter=true&word_timestamps=false&output=json', {
       method: 'POST',
       body: formData
     })
-    .then(response => response.text())
+    .then(response => response.json())
     .then(transcribedText => {
-      console.log('Transcribed text:', transcribedText);
-      // Add your logic to handle the transcribed text
-      sendMessage(transcribedText);
+      console.log('Transcribed text:', transcribedText["text"]);
+      sendMessage(transcribedText["text"], transcribedText["language"]);
     })
     .catch(error => console.error('Error sending audio to ASR:', error));
   };
@@ -186,7 +185,8 @@ function App() {
     });
   };
 
-  const handleTTS = async (text) => {
+  const handleTTS = async (text, lang) => {
+    setWaveformColor('#679989');
     isTTSPending = true;
   
     function linearInterpolate(sample1, sample2, fraction) {
@@ -200,7 +200,7 @@ function App() {
       },
       body: JSON.stringify({
         text: text,
-        language: 'en',
+        language: lang,
         gpt_cond_latent: speakerRef.current.gpt_cond_latent,
         speaker_embedding: speakerRef.current.speaker_embedding,
         add_wav_header: false,
@@ -280,7 +280,7 @@ function App() {
     });
   };  
 
-  const generateBotResponse = async (text) => {
+  const generateBotResponse = async (text, lang) => {
     let generated_text = "";
     let current_sentence = "";
     const response = await fetch('http://localhost:5000/generate_stream', {
@@ -291,7 +291,7 @@ function App() {
       body: JSON.stringify({
         inputs: text,
         parameters: {
-          max_new_tokens: 250
+          max_new_tokens: 250,
         }
       })
     });
@@ -330,7 +330,7 @@ function App() {
                 current_sentence += jsonObject.token.text;
               }
               if (jsonObject.token.text === '.' || jsonObject.token.text === '?' || jsonObject.token.text === '!') {
-                await handleTTS(current_sentence);
+                await handleTTS(current_sentence, lang);
                 while (isTTSPending) {
                   await new Promise(resolve => setTimeout(resolve, 100));
                 }
@@ -349,12 +349,11 @@ function App() {
     return generated_text;
   };
 
-  const sendMessage = async (message) => {
+  const sendMessage = async (message, lang) => {
     if (!message) return;
-    setWaveformColor('#679989');
     conversationRef.current.push({ sender: 'user', message });
     const prompt = conv2prompt(conversationRef.current);
-    let generated_text = await generateBotResponse(prompt);
+    let generated_text = await generateBotResponse(prompt, lang);
     conversationRef.current.push({ sender: 'bot', message: generated_text });
     setWaveformColor('#819a9d');
   };
