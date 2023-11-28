@@ -4,7 +4,7 @@ import './App.css';
 function App() {
   const serverUrl = 'http://localhost:3000';
   const [file, setFile] = useState(null);
-  const [waveformColor, setWaveformColor] = useState('grey');
+  const [waveformColor, setWaveformColor] = useState('#819a9d');
   const isRecordingRef = useRef(false);
   const mediaRecorderRef = useRef(null);
   const speakerRef = useRef(null);
@@ -80,7 +80,7 @@ function App() {
   }, []);
 
   const startRecording = () => {
-    setWaveformColor('red');
+    setWaveformColor('#ed901b');
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -108,7 +108,7 @@ function App() {
               const averageAmplitude = amplitudeSum / sampleCount;
               console.log('Average Amplitude:', averageAmplitude);
               console.log('isRecordingRef.current:', isRecordingRef.current)
-              setCircleDiameter(defaultCircleDiameter + averageAmplitude * defaultCircleDiameter * 0.1);
+              setCircleDiameter(defaultCircleDiameter + averageAmplitude * defaultCircleDiameter * 0.2);
               amplitudeSum = 0;
               sampleCount = 0;
             }
@@ -141,7 +141,7 @@ function App() {
   const stopRecording = () => {
     console.log('Stopping recording', mediaRecorderRef.current);
     mediaRecorderRef.current.stop();
-    setWaveformColor('grey');
+    setWaveformColor('#819a9d');
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current); // Cancel the animation frame request
     }
@@ -351,12 +351,12 @@ function App() {
 
   const sendMessage = async (message) => {
     if (!message) return;
-    setWaveformColor('green');
+    setWaveformColor('#679989');
     conversationRef.current.push({ sender: 'user', message });
     const prompt = conv2prompt(conversationRef.current);
     let generated_text = await generateBotResponse(prompt);
     conversationRef.current.push({ sender: 'bot', message: generated_text });
-    setWaveformColor('grey');
+    setWaveformColor('#819a9d');
   };
 
   return (
