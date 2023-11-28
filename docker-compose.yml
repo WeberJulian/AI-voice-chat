@@ -43,12 +43,12 @@ services:
               count: 1
               capabilities: [gpu]
   asr:
-    image: onerahmet/openai-whisper-asr-webservice:latest-gpu
+    image: onerahmet/openai-whisper-asr-webservice:v1.2.4-gpu
     ports: 
       - "9000:9000"
     environment:
       - ASR_ENGINE=faster_whisper
-      - ASR_MODEL=large-v2
+      - ASR_MODEL=large-v3
     deploy:
       resources:
         reservations:
