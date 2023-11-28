@@ -4,12 +4,13 @@ import './App.css';
 function App() {
   const serverUrl = 'http://localhost:3000';
   const [file, setFile] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
   const [waveformColor, setWaveformColor] = useState('grey');
+  const isRecordingRef = useRef(false);
   const mediaRecorderRef = useRef(null);
   const speakerRef = useRef(null);
+  const animationFrameRef = useRef(null);
   const conversationRef = useRef([
-    {sender: 'user', message: "You are a large language model known as OpenChat, the open-source counterpart to ChatGPT, equally powerful as its closed-source sibling. You communicate using an advanced deep learning based speech synthesis system, so feel free to include interjections (such as 'hmm', 'oh', 'right', 'wow'...), but avoid using emojis, symboles, code snippets, or anything else that does not translate well to spoken language. Fox exemple, instead of using % say percent, = say equal and for * say times etc... Also please avoid using lists with numbers as items like so 1. 2. Use regular sentences instead."},
+    {sender: 'user', message: "You are a large language model known as OpenChat, the open-source counterpart to ChatGPT, equally powerful as its closed-source sibling. You communicate using an advanced deep learning based speech synthesis system made by coqui AI, so feel free to include interjections (such as 'hmm', 'oh', 'right', 'wow'...), but avoid using emojis, symboles, code snippets, or anything else that does not translate well to spoken language. Fox exemple, instead of using % say percent, = say equal and for * say times etc... Also please avoid using lists with numbers as items like so 1. 2. Use regular sentences instead."},
     {sender: 'bot', message: "Hmm ok, I'll do as you say."},
   ]);
   let audioChunks = [];
@@ -56,15 +57,15 @@ function App() {
   useEffect(() => {
     // Setup event listeners for push-to-talk
     const handleKeyDown = (event) => {
-      if (event.key === 'Alt' && !isRecording) {
-        setIsRecording(true);
+      if (event.key === 'Alt' && !isRecordingRef.current) {
+        isRecordingRef.current = true;
         startRecording();
       }
     };
 
     const handleKeyUp = (event) => {
-      if (event.key === 'Alt' && isRecording) {
-        setIsRecording(false);
+      if (event.key === 'Alt' && isRecordingRef.current) {
+        isRecordingRef.current = false;
         stopRecording();
       }
     };
@@ -76,12 +77,48 @@ function App() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isRecording]);
+  }, []);
 
   const startRecording = () => {
     setWaveformColor('red');
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const mediaStreamSource = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        mediaStreamSource.connect(analyser);
+        
+        let amplitudeSum = 0; // Accumulator for amplitude values
+        let sampleCount = 0; // Counter for number of samples processed
+
+        // Setup to periodically analyze the audio stream
+        const processAudio = () => {
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          analyser.getByteTimeDomainData(dataArray);
+          
+          // Calculate amplitude values and accumulate
+          dataArray.forEach(value => {
+            amplitudeSum += Math.abs(value - 128); // Subtracting 128 because the range is 0-255
+            sampleCount++;
+          });
+          
+          // Every 1000 samples, calculate and log the average, then reset
+          if (sampleCount >= 100) {
+            if (isRecordingRef.current) {
+              const averageAmplitude = amplitudeSum / sampleCount;
+              console.log('Average Amplitude:', averageAmplitude);
+              console.log('isRecordingRef.current:', isRecordingRef.current)
+              setCircleDiameter(defaultCircleDiameter + averageAmplitude * defaultCircleDiameter * 0.1);
+              amplitudeSum = 0;
+              sampleCount = 0;
+            }
+          }
+
+          animationFrameRef.current = requestAnimationFrame(processAudio);
+        };
+        animationFrameRef.current = requestAnimationFrame(processAudio);
+
+        processAudio();
         mediaRecorderRef.current = new MediaRecorder(stream);
         mediaRecorderRef.current.start();
         console.log('Starting to record:', mediaRecorderRef.current);
@@ -95,6 +132,7 @@ function App() {
           const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
           sendAudioToASR(audioBlob);
           audioChunks = [];
+          audioContext.close();
         };
       })
       .catch(err => console.error('Error accessing microphone:', err));
@@ -104,6 +142,9 @@ function App() {
     console.log('Stopping recording', mediaRecorderRef.current);
     mediaRecorderRef.current.stop();
     setWaveformColor('grey');
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current); // Cancel the animation frame request
+    }
   };
 
   const sendAudioToASR = (audioBlob) => {
