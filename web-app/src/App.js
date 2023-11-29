@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef} from 'react';
 import './App.css';
 
 function App() {
-  const serverUrl = 'http://localhost:3000';
   const [file, setFile] = useState(null);
   const [waveformColor, setWaveformColor] = useState('#819a9d');
   const isRecordingRef = useRef(false);
@@ -67,7 +66,7 @@ function App() {
         const formData = new FormData();
         formData.append('wav_file', blob, 'female.wav');
 
-        const speakerResponse = await fetch(serverUrl + '/clone_speaker', {
+        const speakerResponse = await fetch('/clone_speaker', {
           method: 'POST',
           body: formData,
         });
@@ -177,7 +176,7 @@ function App() {
     console.log('Sending audio to ASR:', audioBlob);
     formData.append('audio_file', audioBlob);
 
-    fetch(serverUrl + '/asr?encode=true&task=transcribe&vad_filter=true&word_timestamps=false&output=json', {
+    fetch('/asr?encode=true&task=transcribe&vad_filter=true&word_timestamps=false&output=json', {
       method: 'POST',
       body: formData
     })
@@ -197,7 +196,7 @@ function App() {
     const formData = new FormData();
     formData.append('wav_file', file);
 
-    fetch(serverUrl + '/clone_speaker', {
+    fetch('/clone_speaker', {
       method: 'POST',
       body: formData,
     })
@@ -218,7 +217,7 @@ function App() {
       return sample1 * (1 - fraction) + sample2 * fraction;
     }
   
-    await fetch(serverUrl + '/tts_stream', {
+    await fetch('/tts_stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
