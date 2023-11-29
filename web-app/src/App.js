@@ -11,13 +11,40 @@ function App() {
   const animationFrameRef = useRef(null);
   const conversationRef = useRef([
     {sender: 'user', message: "You are a large language model known as OpenChat, the open-source counterpart to ChatGPT, equally powerful as its closed-source sibling. You communicate using an advanced deep learning based speech synthesis system made by coqui AI, so feel free to include interjections (such as 'hmm', 'oh', 'right', 'wow'...), but avoid using emojis, symboles, code snippets, or anything else that does not translate well to spoken language. Fox exemple, instead of using % say percent, = say equal and for * say times etc... Also please avoid using lists with numbers as items like so 1. 2. Use regular sentences instead."},
-    {sender: 'bot', message: "Hmm ok, I'll do as you say."},
+    {sender: 'user', message: "You are an advanced simulation of our favourite machine learning youtuber based on a deep learning system made by coqui. You're made to explain machine learning to us, you know every paper there is."},
+    // {sender: 'user', message: "You are an advanced simulation of me. I am an artificial intelligence engineer and I work at coqui. You are a smarter and more sarcastic version of me."},
+    // {sender: 'bot', message: "No kidding, you're not telling me anything new. I already know all that. I'm a simulation of you, I know everything you know."},
   ]);
   let audioChunks = [];
   let isTTSPending = false;
 
   const defaultCircleDiameter = 200;
   const [circleDiameter, setCircleDiameter] = useState(defaultCircleDiameter);
+
+  const handleMouseDown = () => {
+    if (!isRecordingRef.current) {
+      isRecordingRef.current = true;
+      startRecording();
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isRecordingRef.current) {
+      isRecordingRef.current = false;
+      stopRecording();
+    }
+  };
+
+  // Use these for touch devices
+  const handleTouchStart = (e) => {
+    e.preventDefault(); // Prevents additional mouse events
+    handleMouseDown();
+  };
+
+  const handleTouchEnd = (e) => {
+    e.preventDefault(); // Prevents additional mouse events
+    handleMouseUp();
+  };
 
   const conv2prompt = (conv) => {
     let prompt = "";
@@ -106,9 +133,7 @@ function App() {
           if (sampleCount >= 100) {
             if (isRecordingRef.current) {
               const averageAmplitude = amplitudeSum / sampleCount;
-              console.log('Average Amplitude:', averageAmplitude);
-              console.log('isRecordingRef.current:', isRecordingRef.current)
-              setCircleDiameter(defaultCircleDiameter + averageAmplitude * defaultCircleDiameter * 0.2);
+              setCircleDiameter(defaultCircleDiameter + averageAmplitude * defaultCircleDiameter * 0.15);
               amplitudeSum = 0;
               sampleCount = 0;
             }
@@ -243,7 +268,6 @@ function App() {
             // Every 100 samples, calculate and log the average, then reset
             if (sampleCount === 1000) {
               const averageAmplitude = amplitudeSum / sampleCount;
-              console.log('Running Average Amplitude:', averageAmplitude);
               amplitudeSum = 0;
               sampleCount = 0;
               setCircleDiameter(defaultCircleDiameter + averageAmplitude * defaultCircleDiameter * 3);
@@ -361,12 +385,18 @@ function App() {
   return (
     <div className="App">
       <div>
-        {/* <div className="settings-tab">
+        <div className="settings-tab">
           <input type="file" onChange={handleFileChange} />
           <button onClick={handleUpload}>Upload and Process</button>
-        </div> */}
+        </div>
         <div className="waveform-container">
-          <div className="circle" style={{ width: circleDiameter, height: circleDiameter, backgroundColor: waveformColor }}></div>
+          <div 
+            className="circle"
+            style={{ width: circleDiameter, height: circleDiameter, backgroundColor: waveformColor }}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}></div>
         </div>
       </div>
     </div>
