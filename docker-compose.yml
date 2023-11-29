@@ -30,9 +30,11 @@ services:
               count: 1
               capabilities: [gpu]
   tts:
-    image: ghcr.io/coqui-ai/xtts-streaming-server:main-a0cc660385fea2fba09dffd8c87158d5e8f2d45a
+    image: ghcr.io/coqui-ai/xtts-streaming-server:main-cuda121-818a108b41be2dd43dada04bd319fdfcdabc5c6a
     ports:
       - "8000:80"
+    volumes:
+      - /media/julian/Workdisk/models/ai_voice_chat:/app/tts_models
     environment:
       - COQUI_TOS_AGREED=1
     deploy:
