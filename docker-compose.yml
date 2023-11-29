@@ -34,8 +34,9 @@ services:
     image: ghcr.io/coqui-ai/xtts-streaming-server:main-cuda121-818a108b41be2dd43dada04bd319fdfcdabc5c6a
     ports:
       - "8000:80"
-    volumes:
-      - /media/julian/Workdisk/models/ai_voice_chat:/app/tts_models
+    # Uncomment the following lines to use your own models
+    # volumes:
+    #   - /media/julian/Workdisk/models/ai_voice_chat:/app/tts_models
     environment:
       - COQUI_TOS_AGREED=1
     deploy:
