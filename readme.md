@@ -42,7 +42,7 @@ docker-compose up
 
 2. Allow microphone access
 
-3. Push to talk either with the `SPACE` key or the circle
+3. Push to talk either with the `Shift` ⇧ key or the circle
 
 4. Enjoy!
 
