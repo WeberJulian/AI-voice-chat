@@ -240,6 +240,7 @@ function App() {
         throw new Error('Network response was not ok');
       }
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const playbackSpeed = 24000 / audioContext.sampleRate;
       const scriptNode = audioContext.createScriptProcessor(4096, 1, 1);
       scriptNode.connect(audioContext.destination);
   
@@ -263,7 +264,7 @@ function App() {
               sampleFraction
             );
             outputBuffer[i] = interpolatedSample / 32768;
-            nextSample += 0.54421769;
+            nextSample += playbackSpeed;
   
             // Calculate amplitude and update accumulator
             amplitudeSum += Math.abs(outputBuffer[i]);
@@ -311,7 +312,7 @@ function App() {
   const generateBotResponse = async (text, lang) => {
     let generated_text = "";
     let current_sentence = "";
-    const response = await fetch('http://localhost:5000/generate_stream', {
+    const response = await fetch('/generate_stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
