@@ -9,6 +9,10 @@ It uses `Whisper large v3` for transcription, `openchat 3.5 AWQ` for the AI assi
 Its main feature is speech to speech latency, it more than halves the latency of the ChatGPT with voice demo video.
 This repo runs on a single RTX 3090 GPU. No concurency is supported and the server is not optimized for production.
 
+## Demo
+
+https://github.com/WeberJulian/AI-voice-chat/assets/17219561/2be20ec1-fa5e-4c26-83ec-c074357f3905
+
 ## Installation
 
 ### Requisites
