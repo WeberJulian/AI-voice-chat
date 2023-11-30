@@ -4,10 +4,12 @@
 
 This is a simple react app that allows you to chat with an AI assistant using your voice.
 
-It uses `Whisper large v3` for transcription, `openchat 3.5 AWQ` for the AI assistant, and `XTTS v2` for text to speech.
+It uses `Whisper large v3` for transcription, `openchat 3.5 AWQ` for the AI assistant, and `XTTS v2` for text-to-speech.
 
-Its main feature is speech to speech latency, it more than halves the latency of the ChatGPT with voice demo video.
-This repo runs on a single RTX 3090 GPU. No concurency is supported and the server is not optimized for production.
+Its main feature is speech-to-speech latency, it more than halves the latency of the ChatGPT with voice demo video.
+This repo runs on a single RTX 3090 GPU. 
+
+No concurrency is supported and the project is not optimized production ready. It's also probably riddled with bugs so if you experience some, please open an issue or send a PR.
 
 ## Demo
 
@@ -55,7 +57,7 @@ To reset the conversation, refresh the page.
 
 ## Custom models
 
-If you fine tune XTTS and want to use your own model, you can add that line to the `docker-compose.yml` file, in the tts service:
+If you fine-tune XTTS and want to use your own model, you can add that line to the `docker-compose.yml` file, in the tts service:
 
 ```yml
 services:
