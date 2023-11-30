@@ -9,10 +9,10 @@ function App() {
   const speakerRef = useRef(null);
   const animationFrameRef = useRef(null);
   const conversationRef = useRef([
-    {sender: 'user', message: "You are a large language model known as OpenChat, the open-source counterpart to ChatGPT, equally powerful as its closed-source sibling. You communicate using an advanced deep learning based speech synthesis system made by coqui AI, so feel free to include interjections (such as 'hmm', 'oh', 'right', 'wow'...), but avoid using emojis, symboles, code snippets, or anything else that does not translate well to spoken language. Fox exemple, instead of using % say percent, = say equal and for * say times etc... Also please avoid using lists with numbers as items like so 1. 2. Use regular sentences instead."},
-    {sender: 'user', message: "You are an advanced simulation of our favourite machine learning youtuber based on a deep learning system made by coqui. You're made to explain machine learning to us, you know every paper there is."},
-    // {sender: 'user', message: "You are an advanced simulation of me. I am an artificial intelligence engineer and I work at coqui. You are a smarter and more sarcastic version of me."},
-    // {sender: 'bot', message: "No kidding, you're not telling me anything new. I already know all that. I'm a simulation of you, I know everything you know."},
+    {sender: 'user', message: "You are a large language model known as OpenChat, the open-source counterpart to ChatGPT, equally powerful as its closed-source sibling. You communicate using an advanced deep learning based speech synthesis system made by coqui, so feel free to include interjections (such as 'hmm', 'oh', 'right', 'wow'...), but avoid using emojis, symboles, code snippets, or anything else that does not translate well to spoken language. Fox exemple, instead of using % say percent, = say equal and for * say times etc... Also please avoid using lists with numbers as items like so 1. 2. Use regular sentences instead."},
+    {sender: 'bot', message: "No problem. Anything else?"},
+    {sender: 'user', message: "Yeah, please always respond in a sentence or two from now on."},
+    {sender: 'bot', message: "Sure, I'll be concise."},
   ]);
   let audioChunks = [];
   let isTTSPending = false;
@@ -58,23 +58,25 @@ function App() {
   }
 
   useEffect(() => {
-    // Function to fetch and process the default speaker file
-    const fetchDefaultSpeakerEmbedding = async () => {
-      try {
-        const response = await fetch('/female.wav');
-        const blob = await response.blob();
-        const formData = new FormData();
-        formData.append('wav_file', blob, 'female.wav');
+      const fetchDefaultSpeakerEmbedding = async () => {
+        navigator.getUserMedia({audio:true,video:false}, function(stream) {
+          stream.getTracks().forEach(x=>x.stop());
+        }, err=>console.log(err));
+        try {
+          const response = await fetch('/en_Károly.wav');
+          const blob = await response.blob();
+          const formData = new FormData();
+          formData.append('wav_file', blob, 'ref.wav');
 
-        const speakerResponse = await fetch('/clone_speaker', {
-          method: 'POST',
-          body: formData,
-        });
-        const speakerData = await speakerResponse.json();
-        speakerRef.current = speakerData;
-      } catch (error) {
-        console.error('Error fetching default speaker embedding:', error);
-      }
+          const speakerResponse = await fetch('/clone_speaker', {
+            method: 'POST',
+            body: formData,
+          });
+          const speakerData = await speakerResponse.json();
+          speakerRef.current = speakerData;
+        } catch (error) {
+          console.error('Error fetching default speaker embedding:', error);
+        }
     };
 
     fetchDefaultSpeakerEmbedding();
@@ -269,7 +271,7 @@ function App() {
               const averageAmplitude = amplitudeSum / sampleCount;
               amplitudeSum = 0;
               sampleCount = 0;
-              setCircleDiameter(defaultCircleDiameter + averageAmplitude * defaultCircleDiameter * 3);
+              setCircleDiameter(defaultCircleDiameter + averageAmplitude * defaultCircleDiameter * 5);
             }
           } else {
             outputBuffer[i] = 0; // Fill with silence if no data available
