@@ -2,6 +2,7 @@ version: '3'
 services:
   nginx:
     image: nginx:alpine
+    platform: linux/amd64
     ports:
       - "5000:80"
     volumes:
@@ -13,6 +14,7 @@ services:
       - asr
   llm:
     image: ghcr.io/huggingface/text-generation-inference:1.1.0
+    platform: linux/amd64
     ports:
       - "8080:8080"
     environment:
@@ -32,6 +34,7 @@ services:
               capabilities: [gpu]
   tts:
     image: ghcr.io/coqui-ai/xtts-streaming-server:main-cuda121-818a108b41be2dd43dada04bd319fdfcdabc5c6a
+    platform: linux/amd64
     ports:
       - "8000:80"
     # Uncomment the following lines to use your own models
@@ -48,6 +51,7 @@ services:
               capabilities: [gpu]
   asr:
     image: onerahmet/openai-whisper-asr-webservice:v1.2.4-gpu
+    platform: linux/amd64
     ports: 
       - "9000:9000"
     environment:
