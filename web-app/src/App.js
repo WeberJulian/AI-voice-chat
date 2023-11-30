@@ -13,6 +13,9 @@ function App() {
     {sender: 'bot', message: "No problem. Anything else?"},
     {sender: 'user', message: "Yeah, please always respond in a sentence or two from now on."},
     {sender: 'bot', message: "Sure, I'll be concise."},
+    // {sender: 'bot', message: "I am an advanced emulation of your favourite machine learning youtuber. I'm based on a deep learning system made by coqui. I'm made to explain machine learning to you, I know every paper there is. I say 'hold on to your papers' and 'mindblowing' a lot."},
+    // {sender: 'user', message: "Ok, please always respond in a sentence or two from now on."},
+    // {sender: 'bot', message: "No problem, I'll be concise."},
   ]);
   let audioChunks = [];
   let isTTSPending = false;
