@@ -52,3 +52,22 @@ docker-compose up
 4. Enjoy!
 
 To reset the conversation, refresh the page.
+
+## Custom models
+
+If you fine tune XTTS and want to use your own model, you can add that line to the `docker-compose.yml` file, in the tts service:
+
+```yml
+services:
+    ...
+    tts:
+        ...
+        volumes:
+            - /path/to/your/model:/app/tts_models
+```
+
+In the /path/to/your/model folder, you must have the following files:
+- `config.json`
+- `model.pth`
+- `vocab.json`
+
