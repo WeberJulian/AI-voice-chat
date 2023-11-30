@@ -66,7 +66,7 @@ function App() {
           stream.getTracks().forEach(x=>x.stop());
         }, err=>console.log(err));
         try {
-          const response = await fetch('/en_Károly.wav');
+          const response = await fetch('/female.wav');
           const blob = await response.blob();
           const formData = new FormData();
           formData.append('wav_file', blob, 'ref.wav');
