@@ -37,6 +37,7 @@ npm install && npm run build
 3. Start everything 🚀
 
 ```bash
+cd ..
 docker-compose up
 ```
 
