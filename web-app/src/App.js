@@ -88,7 +88,7 @@ function App() {
   useEffect(() => {
     // Setup event listeners for push-to-talk
     const handleKeyDown = (event) => {
-      if (event.key === 'Shift') {
+      if (event.key === 'Shift' && !isRecordingRef.current) {
         isRecordingRef.current = true;
         startRecording();
       }
