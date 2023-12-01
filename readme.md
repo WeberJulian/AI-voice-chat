@@ -11,6 +11,9 @@ This repo runs on a single RTX 3090 GPU.
 
 No concurrency is supported and the project is not optimized production ready. It's also probably riddled with bugs so if you experience some, please open an issue or send a PR.
 
+The XTTS v2 model is from the [coqui-TTS](https://github.com/coqui-ai/TTS).
+If you have any questions about the model or the project, you can join our [discord server](https://discord.gg/vHgDbMzgfv)
+
 ## Demo
 
 https://github.com/WeberJulian/AI-voice-chat/assets/17219561/2be20ec1-fa5e-4c26-83ec-c074357f3905
